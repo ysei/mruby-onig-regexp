@@ -161,3 +161,39 @@ end
 assert('OnigMatchData#regexp') do
   assert_equal '(\w+)(\w)', onig_match_data_example.regexp.source
 end
+
+# global variables
+assert('$~') do
+  m = onig_match_data_example
+  assert_equal m[0], $~[0]
+end
+
+assert('$&') do
+  m = onig_match_data_example
+  assert_equal m[0], $&
+end
+
+assert('$`') do
+  m = onig_match_data_example
+  assert_equal m.pre_match, $`
+end
+
+assert('$\'') do
+  m = onig_match_data_example
+  assert_equal m.post_match, '$'
+end
+
+assert('$+') do
+  m = onig_match_data_example
+  assert_equal m[-1], $+
+end
+
+assert('$1') do
+  onig_match_data_example
+  assert_equal 'aaab', $1
+end
+
+assert('$2') do
+  onig_match_data_example
+  assert_equal 'b', $2
+end

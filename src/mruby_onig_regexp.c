@@ -287,6 +287,71 @@ match_data_to_s(mrb_state* mrb, mrb_value self) {
   return mrb_str_substr(mrb, str, reg->beg[0], reg->end[0] - reg->beg[0]);
 }
 
+static mrb_value
+get_last_match(mrb_state* mrb) {
+  mrb_value const ret = mrb_mod_cv_get(
+      mrb, mrb_class_get(mrb, "OnigRegexp"), mrb_intern_lit(mrb, "@last_match"));
+  if(mrb_nil_p(ret)) { mrb_raise(mrb, E_REGEXP_ERROR, "last_match not found"); }
+  return ret;
+}
+
+// $~
+static mrb_value
+glob_last_match(mrb_state* mrb, mrb_value self) {
+  (void)self;
+  return get_last_match(mrb);
+}
+
+// $&
+static mrb_value
+glob_full_match(mrb_state* mrb, mrb_value self) {
+  (void)self;
+  return mrb_funcall(mrb, get_last_match(mrb), "[]", 1, mrb_fixnum_value(0));
+}
+
+// $`
+static mrb_value
+glob_pre_match(mrb_state* mrb, mrb_value self) {
+  (void)self;
+  return mrb_funcall(mrb, get_last_match(mrb), "pre_match", 0);
+}
+
+// $'
+static mrb_value
+glob_post_match(mrb_state* mrb, mrb_value self) {
+  (void)self;
+  return mrb_funcall(mrb, get_last_match(mrb), "post_match", 0);
+}
+
+// $+
+static mrb_value
+glob_last_group(mrb_state* mrb, mrb_value self) {
+  (void)self;
+  return mrb_funcall(mrb, get_last_match(mrb), "[]", 1, mrb_fixnum_value(-1));
+}
+
+// $1 to $9
+#define define_glob_group(idx)                                \
+  static mrb_value                                            \
+  glob_ ## idx ## nd_group(mrb_state* mrb, mrb_value self) {  \
+    (void)self;                                               \
+    return mrb_funcall(mrb, get_last_match(mrb),              \
+                       "[]", 1, mrb_fixnum_value(idx));       \
+  }                                                           \
+
+define_glob_group(1)
+define_glob_group(2)
+define_glob_group(3)
+define_glob_group(4)
+define_glob_group(5)
+define_glob_group(6)
+define_glob_group(7)
+define_glob_group(8)
+define_glob_group(9)
+
+#undef define_glob_group
+
+
 void
 mrb_mruby_onig_regexp_gem_init(mrb_state* mrb) {
   struct RClass *clazz;
@@ -329,6 +394,23 @@ mrb_mruby_onig_regexp_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, match_data, "to_a", &match_data_to_a, MRB_ARGS_NONE());
   mrb_define_method(mrb, match_data, "to_s", &match_data_to_s, MRB_ARGS_NONE());
   // mrb_define_method(mrb, match_data, "values_at", &match_data_values_at);
+
+  // global variables
+  mrb_define_method(mrb, mrb->object_class, "$~", &glob_last_match, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$&", &glob_full_match, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$`", &glob_pre_match, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$'", &glob_post_match, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$+", &glob_last_group, MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, mrb->object_class, "$1", &glob_1nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$2", &glob_2nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$3", &glob_3nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$4", &glob_4nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$5", &glob_5nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$6", &glob_6nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$7", &glob_7nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$8", &glob_8nd_group, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrb->object_class, "$9", &glob_9nd_group, MRB_ARGS_NONE());
 }
 
 void
